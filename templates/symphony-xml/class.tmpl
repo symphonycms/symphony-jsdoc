@@ -1,0 +1,319 @@
+<?xml version="1.0"?>
+
+{!
+	var classType = "";
+	
+	if (data.isBuiltin()) {
+		classType += "built-in";
+	}
+	
+	if (data.isNamespace) {
+		if (data.is('FUNCTION')) {
+			classType += "function";
+		}
+		classType += "namespace";
+	}
+	else {
+		classType += "class";
+	}
+	
+!}
+
+<if test="data.properties.length">
+	{! var ownProperties = data.properties.filter(function($){return $.memberOf == data.alias && !$.isNamespace}).sort(makeSortby("name")); !}
+</if>
+
+<if test="data.methods.length">
+	{! var ownMethods = data.methods.filter(function($){return $.memberOf == data.alias  && !$.isNamespace}).sort(makeSortby("name")); !}
+</if>
+
+<class type="{+classType+}" name="{+data.alias+}" handle="{+data.alias+}">
+	
+	<package name="assets" handle="assets"/>
+	
+	<if test="!data.isBuiltin()">
+		<location>{+url(data.srcFile)+}</location>
+	</if>
+	
+	<modifiers>
+		<modifier>public</modifier>
+	</modifiers>
+	
+	<!--description>
+		<p>{+resolveLinks(data.classDesc)+}</p>
+	</description-->
+	
+	<if test="(!data.isBuiltin() && (data.isNamespace || data.is('CONSTRUCTOR')))">		
+		<description>
+			<p>{+resolveLinks(data.desc)+}</p>
+			<if test="data.example.length">
+				<for each="example" in="data.example">
+					<pre class="code">{+example+}</pre>
+				</for>
+			</if>
+		</description>
+	</if>
+	
+	
+	<if test="defined(ownProperties) && ownProperties.length">
+		
+		<fields>
+			
+			<for each="member" in="ownProperties">
+				
+				<field name="{+member.name+}" {! if(member.type) output+= "type='{+member.type+}'" !} {! if(member.defaultValue) output+= "value='{+resolveLinks(member.defaultValue)+}'" !}>
+					<modifiers>
+						{!
+							if (member.isPrivate) output += "<modifier>private</modifier>";
+							if (!member.isPrivate) output += "<modifier>public</modifier>";
+							if (member.isInner) output += "<modifier>inner</modifier>";
+							if (member.isStatic) output += "<modifier>static</modifier>";
+							if (member.isConstant) output += "<modifier>constant</modifier>";
+						!}
+					</modifiers>
+					
+					<if test="member.srcFile != data.srcFile">
+						<location>{+url(member.srcFile)+}</location>
+					</if>
+					
+					<description>
+						<p>{+resolveLinks(member.desc)+}</p>
+						<if test="member.example.length">
+							<for each="example" in="member.example">
+								<pre class="code">{+example+}</pre>
+							</for>
+						</if>
+					</description>
+					
+					<tags>
+						
+						<if test="member.deprecated">
+							<tag group="Deprecated">
+								<description>
+									<p>{+ resolveLinks(member.deprecated) +}</p>
+								</description>
+							</tag>
+						</if>
+						
+						<if test="member.see.length">
+							<for each="item" in="member.see">
+								<tag group="See Also" package="{+getItemPathParts(item,'package')+}" class="{+getItemPathParts(item,'class')+}" docblock="{+getItemPathParts(item,'docblock')+}" path="{+getItemPathParts(item,'path')+}">
+									{+getItemPathParts(item,'path_visible')+}
+								</tag>
+							</for>
+						</if>
+
+					</tags>
+
+					
+				</field>
+
+			</for>
+		
+		</fields>
+		
+	</if>
+	
+	<if test="(!data.isBuiltin() && (data.isNamespace || data.is('CONSTRUCTOR'))) || defined(ownMethods) && ownMethods.length">
+	
+	<methods>
+	
+		<if test="(!data.isBuiltin() && (data.isNamespace || data.is('CONSTRUCTOR')))">
+	
+		<method
+			name="{+data.name+}"
+			{! if(data.type) output+= "type='" + data.type + "'" !} 
+			<if test="data.returns.length">
+				<for each="item" in="data.returns">
+					{! output+= "return='" + item.type + "'" !}
+				</for>
+			</if>
+		>
+		
+			<modifiers>
+				{!
+					if (data.isPrivate) output += "<modifier>private</modifier>";
+					if (!data.isPrivate) output += "<modifier>public</modifier>";
+					if (data.isInner) output += "<modifier>inner</modifier>";
+					if (data.isStatic) output += "<modifier>static</modifier>";
+				!}
+			</modifiers>
+			
+			<location>{+url(data.srcFile)+}</location>
+			
+			<description>
+				<p>{+resolveLinks(data.desc)+}</p>
+				<if test="data.example.length">
+					<for each="example" in="data.example">
+						<pre class="code">{+example+}</pre>
+					</for>
+				</if>
+			</description>
+			
+			<tags>
+				
+				<if test="data.deprecated">
+					<tag group="Deprecated">
+						<description>
+							<p>{+ resolveLinks(data.deprecated) +}</p>
+						</description>
+					</tag>
+				</if>
+				
+				<if test="data.see.length">
+					<for each="item" in="data.see">
+						<tag group="See Also" package="{+getItemPathParts(item,'package')+}" class="{+getItemPathParts(item,'class')+}" docblock="{+getItemPathParts(item,'docblock')+}" path="{+getItemPathParts(item,'path')+}">
+							{+getItemPathParts(item,'path_visible')+}
+						</tag>
+					</for>
+				</if>
+				
+				<if test="data.returns.length">
+					<for each="item" in="data.returns">
+						<tag group="Returns">
+							<description>
+								<p>{+resolveLinks(item.desc)+}</p>
+							</description>
+						</tag>
+					</for>
+				</if>
+				
+				<if test="data.requires.length">
+					<for each="item" in="data.requires">
+						<tag group="Requires">
+							<description>
+								<p>{+resolveLinks(item)+}</p>
+							</description>
+						</tag>
+					</for>
+				</if>
+				
+				<if test="data.params.length">
+					<for each="item" in="data.params">
+						<tag group="Parameters" name="{+item.name+}">
+							<description>
+								<p>{+resolveLinks(item.desc)+}</p>
+							</description>
+						</tag>
+					</for>
+				</if>
+				
+			</tags>
+			
+			<if test="data.params.length">
+				<parameters>
+					<for each="item" in="data.params">
+						<parameter name="{+item.name+}" type="{+item.type+}" />
+					</for>
+				</parameters>
+			</if>
+			
+		</method>
+		
+		</if>
+		
+		<if test="defined(ownMethods) && ownMethods.length">
+
+				<for each="member" in="ownMethods">
+
+					<method
+						name="{+member.name+}"
+						{! if(member.type) output+= "type='" + member.type + "'" !} 
+						<if test="member.returns.length">
+							<for each="item" in="member.returns">
+								{! output+= "return='" + item.type + "'" !}
+							</for>
+						</if>
+					>
+						<modifiers>
+							{!
+								if (member.isPrivate) output += "<modifier>private</modifier>";
+								if (!member.isPrivate) output += "<modifier>public</modifier>";
+								if (member.isInner) output += "<modifier>inner</modifier>";
+								if (member.isStatic) output += "<modifier>static</modifier>";
+							!}
+						</modifiers>
+
+						<if test="member.srcFile != data.srcFile">
+							<location>{+url(member.srcFile)+}</location>
+						</if>
+
+						<description>
+							<p>{+resolveLinks(member.desc)+}</p>
+							<if test="member.example.length">
+								<for each="example" in="member.example">
+									<pre class="code">{+example+}</pre>
+								</for>
+							</if>
+						</description>
+
+						<tags>
+
+							<if test="member.deprecated">
+								<tag group="Deprecated">
+									<description>
+										<p>{+ resolveLinks(member.deprecated) +}</p>
+									</description>
+								</tag>
+							</if>
+
+							<if test="member.see.length">
+								<for each="item" in="member.see">
+									<tag group="See Also" package="{+getItemPathParts(item,'package')+}" class="{+getItemPathParts(item,'class')+}" docblock="{+getItemPathParts(item,'docblock')+}" path="{+getItemPathParts(item,'path')+}">
+										{+getItemPathParts(item,'path_visible')+}
+									</tag>
+								</for>
+							</if>
+
+							<if test="member.returns.length">
+								<for each="item" in="member.returns">
+									<tag group="Returns">
+										<description>
+											<p>{+resolveLinks(item.desc)+}</p>
+										</description>
+									</tag>
+								</for>
+							</if>
+
+							<if test="member.requires.length">
+								<for each="item" in="member.requires">
+									<tag group="Requires">
+										<description>
+											<p>{+resolveLinks(item)+}</p>
+										</description>
+									</tag>
+								</for>
+							</if>
+
+							<if test="member.params.length">
+								<for each="item" in="member.params">
+									<tag group="Parameters" name="{+item.name+}">
+										<description>
+											<p>{+resolveLinks(item.desc)+}</p>
+										</description>
+									</tag>
+								</for>
+							</if>
+
+						</tags>
+
+						<if test="member.params.length">
+							<parameters>
+								<for each="item" in="member.params">
+									<parameter name="{+item.name+}" type="{+item.type+}" />
+								</for>
+							</parameters>
+						</if>
+
+					</method>
+
+				</for>
+
+		</if>
+		
+	</methods>
+			
+	</if>
+	
+	
+</class>
