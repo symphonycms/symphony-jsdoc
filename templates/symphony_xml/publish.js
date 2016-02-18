@@ -204,6 +204,7 @@ function resolveLinks(str, from) {
 }
 
 function url(url) {
+	url = url.replace(/\\/g, '/');
 	return 'assets/' + url.split('/symphony/assets/')[1];
 }
 
